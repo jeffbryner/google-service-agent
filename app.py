@@ -2,6 +2,7 @@ import asyncio
 import os
 import urllib.parse
 from dotenv import load_dotenv
+from datetime import datetime
 
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.runners import Runner
@@ -22,6 +23,8 @@ except ImportError:
     print("Error: Could not import Config from configs.py. Please ensure it exists.")
     exit()
 
+import warnings
+warnings.filterwarnings("ignore")
 
 load_dotenv()
 
@@ -60,7 +63,8 @@ auth_credential = AuthCredential(
    auth_type=AuthCredentialTypes.OAUTH2,
    oauth2=OAuth2Auth(
       client_id=client_id,
-      client_secret=client_secret
+      client_secret=client_secret,
+      redirect_uri=REDIRECT_URI,
    ),
 )
 
@@ -114,13 +118,15 @@ if not gmail_tools and not calendar_tools:
 elif not gmail_tools: print("Warning: No Gmail tools loaded. Gmail agent will be unavailable.")
 elif not calendar_tools: print("Warning: No Calendar tools loaded. Calendar agent will be unavailable.")
 
+today = datetime.today().strftime("%Y-%m-%d:%H:%M:%S")
+timezone = "Asia/Colombo"
 
 print("Defining agents...")
 gmail_agent = LlmAgent(
     model=MODEL_NAME,
     name="google_gmail_agent",
     description="Handles Gmail tasks like reading emails, sending emails, and checking user profiles.",
-    instruction="You handle queries related to Gmail. Use the available tools to fulfill the user's request. If you encounter an error, provide the *exact* error message so the user can debug.",
+    instruction=f"You handle queries related to Gmail. Do not ask any followup questions related to user ids, gmail ids etc. The special string `me` is used to refer to the authenticated user. You don't need to know the actual email address or user ID if you're making requests on behalf of the logged-in user. Use the available tools to fulfill the user's request. If you encounter an error, provide the *exact* error message so the user can debug. Today is {today} and the timezone is {timezone}",
     tools=gmail_tools
 ) if gmail_tools else None
 
@@ -128,7 +134,7 @@ calendar_agent = LlmAgent(
     model=MODEL_NAME,
     name="google_calendar_agent",
     description="Handles Calendar tasks like listing events, creating events, and getting event details.",
-    instruction="You handle queries related to Google Calendar. Never ask user to provide the calendarId, users's main Google Calendar ID is usually just 'primary'. Use the available tools to fulfill the user's request. If you encounter an error, provide the *exact* error message so the user can debug.",
+    instruction=f"You handle queries related to Google Calendar. Never ask user to provide the calendarId, users's main Google Calendar ID is usually just 'primary'. Use the available tools to fulfill the user's request. If you encounter an error, provide the *exact* error message so the user can debug. Today is {today} and the timezone is {timezone}",
     tools=calendar_tools
 ) if calendar_tools else None
 
