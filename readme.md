@@ -20,4 +20,4 @@ pip install google-adk
 Then you can run agent loop using `python app.py`. If you prefer to use web interface, you can run `adk web` and access the web interface. More info [here](service-agent/agents/README.md)
 
 ## Overview
-![](assets/graph.png)
+![](assets/workflow.png)
