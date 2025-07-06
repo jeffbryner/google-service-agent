@@ -92,7 +92,7 @@ except Exception as e:
 
 # Load Gmail tools
 try:
-    with open("api_specs/open_api_gmail_spec.txt", "r") as f:
+    with open("api_specs/open_api_gmail_spec.json", "r") as f:
         gmail_spec_str = f.read()
     gmail_api_toolset = OpenAPIToolset(
         spec_str=gmail_spec_str,
@@ -108,13 +108,13 @@ try:
     )
 
 except FileNotFoundError:
-    print("Error: Gmail OpenAPI spec file ('open_api_gmail_spec.txt') not found.")
+    print("Error: Gmail OpenAPI spec file ('open_api_gmail_spec.json') not found.")
 except Exception as e:
     print(f"Error loading Gmail tools: {e}")
 
 # Load Calendar tools
 try:
-    with open("api_specs/open_api_calendar_spec.txt", "r") as f:
+    with open("api_specs/open_api_calendar_spec.json", "r") as f:
         calendar_spec_str = f.read()
     calendar_api_toolset = OpenAPIToolset(
         spec_str=calendar_spec_str,
@@ -130,7 +130,9 @@ try:
     )
 
 except FileNotFoundError:
-    print("Error: Calendar OpenAPI spec file ('open_api_calendar_spec.txt') not found.")
+    print(
+        "Error: Calendar OpenAPI spec file ('open_api_calendar_spec.json') not found."
+    )
 except Exception as e:
     print(f"Error loading Calendar tools: {e}")
 
@@ -149,9 +151,10 @@ gmail_agent = LlmAgent(
     description="Handles Gmail tasks like reading emails, sending emails, and checking user profiles.",
     instruction="""
     You handle queries related to Gmail.
-    Use the available tools to fulfill the user's request.
-    If you encounter an error, provide the *exact* error message so the user can debug.
-    If a function includes a userId parameter, always use the special value 'me' to refer to the current authenticated user.
+    - Use the available tools to fulfill the user's request.
+    - If you encounter an error, provide the *exact* error message so the user can debug.
+    - If a function includes a userId parameter, always use the special value 'me' to refer to the current authenticated user.
+    - Don't try any function call more than 3 times.
     The current date/time is: {_time}                    
     """,
     tools=[gmail_api_toolset],
@@ -162,7 +165,12 @@ calendar_agent = LlmAgent(
     model=MODEL_NAME,
     name="google_calendar_agent",
     description="Handles Calendar tasks like listing events, creating events, and getting event details.",
-    instruction="""You handle queries related to Google Calendar. Never ask user to provide the calendarId, users's main Google Calendar ID is usually just 'primary'. Use the available tools to fulfill the user's request. If you encounter an error, provide the *exact* error message so the user can debug.
+    instruction="""
+    You handle queries related to Google Calendar. 
+    - Never ask user to provide the calendarId, users's main Google Calendar ID is just 'primary'.
+    - Use the available tools to fulfill the user's request.
+    - If you encounter an error, provide the *exact* error message so the user can debug.
+    - Don't try any function call more than 3 times.
     The current date/time is: {_time}                     
     """,
     tools=[calendar_api_toolset],
