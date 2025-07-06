@@ -99,13 +99,13 @@ try:
         spec_str_type="json",
         auth_scheme=auth_scheme,
         auth_credential=auth_credential,
+        tool_filter=[
+            "gmail_users_messages_list",
+            "gmail_users_messages_get",
+            "gmail_users_messages_send",
+            "gmail_users_get_profile",
+        ],
     )
-    gmail_selected_tool_names = [
-        "gmail_users_messages_list",
-        "gmail_users_messages_get",
-        "gmail_users_messages_send",
-        "gmail_users_get_profile",
-    ]
 
 except FileNotFoundError:
     print("Error: Gmail OpenAPI spec file ('open_api_gmail_spec.txt') not found.")
@@ -121,13 +121,13 @@ try:
         spec_str_type="json",
         auth_scheme=auth_scheme,
         auth_credential=auth_credential,
+        tool_filter=[
+            "calendar_events_list",
+            "calendar_events_insert",
+            "calendar_events_get",
+            "calendar_calendar_list_list",
+        ],
     )
-    calendar_selected_tool_names = [
-        "calendar_events_list",
-        "calendar_events_insert",
-        "calendar_events_get",
-        "calendar_calendar_list_list",
-    ]
 
 except FileNotFoundError:
     print("Error: Calendar OpenAPI spec file ('open_api_calendar_spec.txt') not found.")
