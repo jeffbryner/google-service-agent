@@ -167,12 +167,6 @@ root_agent = LlmAgent(
                 - If a sub-agent reports an error, relay the exact error message to the user.
                 - Don't try any function call more than 3 times.
                 
-                Here's context for any functions
-                Current user:
-                <User>
-                {userInfo?}
-                </User>
-
                 Current time: {_time}                
                 
                 
