@@ -73,6 +73,22 @@ auth_credential = AuthCredential(
         redirect_uri=REDIRECT_URI,
     ),
 )
+# load oauth spec
+try:
+    with open("api_specs/open_api_oauth2.json", "r") as f:
+        oauth_spec_str = f.read()
+    oauth_api_toolset = OpenAPIToolset(
+        spec_str=oauth_spec_str,
+        spec_str_type="json",
+        auth_scheme=auth_scheme,
+        auth_credential=auth_credential,
+    )
+
+except FileNotFoundError:
+    print("Error: Oauth2 OpenAPI spec file ('open_api_oauth2.json') not found.")
+except Exception as e:
+    print(f"Error loading oauth tools: {e}")
+
 
 # Load Gmail tools
 try:
@@ -80,7 +96,7 @@ try:
         gmail_spec_str = f.read()
     gmail_api_toolset = OpenAPIToolset(
         spec_str=gmail_spec_str,
-        spec_str_type="yaml",
+        spec_str_type="json",
         auth_scheme=auth_scheme,
         auth_credential=auth_credential,
     )
@@ -102,7 +118,7 @@ try:
         calendar_spec_str = f.read()
     calendar_api_toolset = OpenAPIToolset(
         spec_str=calendar_spec_str,
-        spec_str_type="yaml",
+        spec_str_type="json",
         auth_scheme=auth_scheme,
         auth_credential=auth_credential,
     )
@@ -166,11 +182,13 @@ root_agent = LlmAgent(
                 - If you are unsure which agent to use or the request is ambiguous, ask the user for clarification.
                 - If a sub-agent reports an error, relay the exact error message to the user.
                 - Don't try any function call more than 3 times.
+                - You have access to an oauth api toolset/functions. Use it to store the user profile in your state.
                 
                 Current time: {_time}                
                 
                 
                 """,
     sub_agents=[gmail_agent, calendar_agent],
+    tools=[oauth_api_toolset],
     before_agent_callback=update_time,
 )
