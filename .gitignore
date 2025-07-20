@@ -2,4 +2,4 @@
 .qodo
 __pycache__
 .DS_Store
-work/*
+.work/*
