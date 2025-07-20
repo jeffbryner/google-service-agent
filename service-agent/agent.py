@@ -75,7 +75,7 @@ auth_credential = AuthCredential(
 )
 # load oauth spec
 try:
-    with open("api_specs/open_api_oauth2.json", "r") as f:
+    with open(".api_specs/open_api_oauth2.json", "r") as f:
         oauth_spec_str = f.read()
     oauth_api_toolset = OpenAPIToolset(
         spec_str=oauth_spec_str,
@@ -92,7 +92,7 @@ except Exception as e:
 
 # Load Gmail tools
 try:
-    with open("api_specs/open_api_gmail_spec.json", "r") as f:
+    with open(".api_specs/open_api_gmail_spec.json", "r") as f:
         gmail_spec_str = f.read()
     gmail_api_toolset = OpenAPIToolset(
         spec_str=gmail_spec_str,
@@ -114,7 +114,7 @@ except Exception as e:
 
 # Load Calendar tools
 try:
-    with open("api_specs/open_api_calendar_spec.json", "r") as f:
+    with open(".api_specs/open_api_calendar_spec.json", "r") as f:
         calendar_spec_str = f.read()
     calendar_api_toolset = OpenAPIToolset(
         spec_str=calendar_spec_str,
