@@ -150,10 +150,9 @@ gmail_agent = LlmAgent(
     name="google_gmail_agent",
     description="Handles Gmail tasks like reading emails, sending emails, and checking user profiles.",
     instruction="""
-    You handle queries related to Gmail.
+    You handle tasks related to Gmail.
     - Use the available tools to fulfill the user's request.
     - If you encounter an error, provide the *exact* error message so the user can debug.
-    - If a function includes a userId parameter, always use the special value 'me' to refer to the current authenticated user.
     - Don't try any function call more than 3 times.
     The current date/time is: {_time}                    
     """,
@@ -167,7 +166,7 @@ calendar_agent = LlmAgent(
     description="Handles Calendar tasks like listing events, creating events, and getting event details.",
     instruction="""
     You handle queries related to Google Calendar. 
-    - Never ask user to provide the calendarId, users's main Google Calendar ID is just 'primary'.
+    - Never ask user to provide the calendarId, always set the calendarId in any function call to 'primary' to access the main Google Calendar.
     - Use the available tools to fulfill the user's request.
     - If you encounter an error, provide the *exact* error message so the user can debug.
     - Don't try any function call more than 3 times.
@@ -190,13 +189,11 @@ root_agent = LlmAgent(
                 - If you are unsure which agent to use or the request is ambiguous, ask the user for clarification.
                 - If a sub-agent reports an error, relay the exact error message to the user.
                 - Don't try any function call more than 3 times.
-                - You have access to an oauth api toolset/functions. Use it to store the user profile in your state.
                 
                 Current time: {_time}                
                 
                 
                 """,
     sub_agents=[gmail_agent, calendar_agent],
-    tools=[oauth_api_toolset],
     before_agent_callback=update_time,
 )
