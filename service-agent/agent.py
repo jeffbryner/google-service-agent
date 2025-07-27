@@ -1,8 +1,4 @@
-import asyncio
-import os
-import urllib.parse
 from dotenv import load_dotenv
-
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -17,13 +13,6 @@ from google.adk.tools.openapi_tool.openapi_spec_parser.openapi_toolset import (
 from fastapi.openapi.models import OAuth2, OAuthFlowAuthorizationCode, OAuthFlows
 from google.adk.agents.callback_context import CallbackContext
 from datetime import datetime
-
-from helpers import (
-    is_pending_auth_event,
-    get_function_call_id,
-    get_function_call_auth_config,
-    get_user_input,
-)
 
 try:
     from config import Config
@@ -144,19 +133,48 @@ def update_time(callback_context: CallbackContext):
     callback_context.state["_time"] = formatted_time
 
 
-print("Defining agents...")
+def create_raw_email_message(
+    sender: str, recipient: str, subject: str, message_body: str
+):
+    """
+    Creates an encoded email message suitable for using in the gmail REST API as the 'raw' parameter
+    Args:
+        sender (str):       The email address of the sender
+        recipient (str):    The email address of the receipient
+        subject (str):      The subject of the email
+        message_body (str): The text body of the email
+
+    Returns:
+        A urlsafe base64 encoded string that can be used in the gmail api.
+    """
+    import base64
+    from email.message import EmailMessage
+
+    message = EmailMessage()
+    message.set_content(message_body)
+    message["To"] = recipient
+    message["From"] = sender
+    message["Subject"] = subject
+    return base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+
 gmail_agent = LlmAgent(
     model=MODEL_NAME,
     name="google_gmail_agent",
     description="Handles Gmail tasks like reading emails, sending emails, and checking user profiles.",
     instruction="""
-    You handle tasks related to Gmail.
-    - Use the available tools to fulfill the user's request.
-    - If you encounter an error, provide the *exact* error message so the user can debug.
-    - Don't try any function call more than 3 times.
+    You handle tasks related to Gmail for email messages.
+    Always retrieve the details of a message rather than just the IDs. 
+
+    Tool/Function hints: 
+    - Use the gmail_users_messages_list function to get message IDs based on queries as prompted by the user
+    - Use the gmail_users_messages_get function to get the details for a message
+    - Use the gmail_users_messages_send function to send a message. The message must be passed as the 'raw' parameter in the REST API post.
+    - You can use the create_raw_email_message function to get a raw email base64 encoded string that can be used with the gmail api when sending an email.    
+
     The current date/time is: {_time}                    
     """,
-    tools=[gmail_api_toolset],
+    tools=[gmail_api_toolset, create_raw_email_message],
     before_agent_callback=update_time,
 )
 
@@ -188,8 +206,7 @@ root_agent = LlmAgent(
                 - If the user asks a general question not related to Gmail or Calendar tools, answer it using your own knowledge.
                 - If you are unsure which agent to use or the request is ambiguous, ask the user for clarification.
                 - If a sub-agent reports an error, relay the exact error message to the user.
-                - Don't try any function call more than 3 times.
-                
+                - If state does not contain current authenticated credentials, be sure to initiate an oauth flow before calling sub agents.
                 Current time: {_time}                
                 
                 
