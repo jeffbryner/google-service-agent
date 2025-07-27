@@ -23,7 +23,6 @@ except ImportError:
 
 load_dotenv()
 
-MODEL_NAME = Config.MODEL_NAME
 REDIRECT_URI = Config.REDIRECT_URI
 
 try:
@@ -133,6 +132,13 @@ def update_time(callback_context: CallbackContext):
     callback_context.state["_time"] = formatted_time
 
 
+def get_current_date_time() -> dict:
+    """
+    Get the current date and time
+    """
+    return {"current_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+
+
 def create_raw_email_message(
     sender: str, recipient: str, subject: str, message_body: str
 ):
@@ -159,27 +165,28 @@ def create_raw_email_message(
 
 
 gmail_agent = LlmAgent(
-    model=MODEL_NAME,
+    model=Config.TOOL_MODEL_NAME,
     name="google_gmail_agent",
     description="Handles Gmail tasks like reading emails, sending emails, and checking user profiles.",
     instruction="""
     You handle tasks related to Gmail for email messages.
-    Always retrieve the details of a message rather than just the IDs. 
+    Always retrieve the details of a message rather than just the message IDs. 
 
     Tool/Function hints: 
     - Use the gmail_users_messages_list function to get message IDs based on queries as prompted by the user
-    - Use the gmail_users_messages_get function to get the details for a message
+    - Use the gmail_users_messages_get function to get the details for a message ID and return answers to queries for the user
     - Use the gmail_users_messages_send function to send a message. The message must be passed as the 'raw' parameter in the REST API post.
     - You can use the create_raw_email_message function to get a raw email base64 encoded string that can be used with the gmail api when sending an email.    
+    
 
     The current date/time is: {_time}                    
     """,
-    tools=[gmail_api_toolset, create_raw_email_message],
+    tools=[gmail_api_toolset, create_raw_email_message, get_current_date_time],
     before_agent_callback=update_time,
 )
 
 calendar_agent = LlmAgent(
-    model=MODEL_NAME,
+    model=Config.TOOL_MODEL_NAME,
     name="google_calendar_agent",
     description="Handles Calendar tasks like listing events, creating events, and getting event details.",
     instruction="""
@@ -187,16 +194,16 @@ calendar_agent = LlmAgent(
     - Never ask user to provide the calendarId, always set the calendarId in any function call to 'primary' to access the main Google Calendar.
     - Use the available tools to fulfill the user's request.
     - If you encounter an error, provide the *exact* error message so the user can debug.
-    - Don't try any function call more than 3 times.
+
     The current date/time is: {_time}                     
     """,
-    tools=[calendar_api_toolset],
+    tools=[calendar_api_toolset, get_current_date_time],
     before_agent_callback=update_time,
 )
 
 
 root_agent = LlmAgent(
-    model=MODEL_NAME,
+    model=Config.AGENT_MODEL_NAME,
     name="task_root_agent",
     description="Acts as the main interface, routing tasks to Gmail or Calendar agents or answering general questions.",
     # Instruction updated to be clearer about delegation
@@ -206,8 +213,8 @@ root_agent = LlmAgent(
                 - If the user asks a general question not related to Gmail or Calendar tools, answer it using your own knowledge.
                 - If you are unsure which agent to use or the request is ambiguous, ask the user for clarification.
                 - If a sub-agent reports an error, relay the exact error message to the user.
-                - If state does not contain current authenticated credentials, be sure to initiate an oauth flow before calling sub agents.
-                Current time: {_time}                
+                
+                The Current date/time is: {_time}                
                 
                 
                 """,

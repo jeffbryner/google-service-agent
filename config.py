@@ -6,7 +6,8 @@ load_dotenv()
 
 
 class Config:
-    MODEL_NAME = "gemini-2.0-flash-001"
+    AGENT_MODEL_NAME = "gemini-2.5-pro"
+    TOOL_MODEL_NAME = "gemini-2.5-flash"
     CLIENT_ID = os.getenv("CLIENT_ID")
     CLIENT_SECRET = os.getenv("CLIENT_SECRET")
     REDIRECT_URI = "http://localhost:8000/callback"
